@@ -401,6 +401,21 @@ static playlist_item_t *NextItem( playlist_t *p_playlist )
                                        get_current_status_item( p_playlist ) );
             }
             p_playlist->i_current_index = 0;
+
+            /* is there actually any input which is readable?
+               fixes bug of endless loop with 100% CPU load in case only unplayable items in playlist and loop=ON */
+            while (ARRAY_VAL(p_playlist->current, p_playlist->i_current_index)->p_input->b_error_when_reading == 1)
+            {
+                if (p_playlist->i_current_index == (p_playlist->current.i_size-1))
+                {
+                    PL_DEBUG("no playable item in playlist, playback stopped");
+                    return NULL;
+                }
+                else
+                {
+                    p_playlist->i_current_index++;
+                }
+            }
         }
         PL_DEBUG( "using item %i", p_playlist->i_current_index );
         if ( p_playlist->current.i_size == 0 )
